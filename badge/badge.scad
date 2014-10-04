@@ -1,4 +1,4 @@
-// g-Badge dimensions.
+// Badge dimensions.
 width = 55;  // mm.
 height = 86;  // mm.
 depth = 2.5;  // mm.
@@ -15,22 +15,22 @@ window_height = height - 2*tolerance;  // cover top and bottom by 'tolerance' mm
 // Slot is the inner gap that allows badge to slide into frame.
 // The slot should be *slightly* larger than the badge.
 slot_width = width + 2;  // 1 mm on left and right.
-slot_height = height + 2;  // 1 mm on bottom. top is handled differently due to badge clip.
+slot_height = height + 2;  // 1 mm on bottom and top. (not counting badge clip).
 slot_depth = depth + 0.5;  // pretty tight. but should be enought.
 
 // Outside is the external dimension of the entire frame.
 // Must be greater than slot_width.
-outside_width = slot_width + 2*tolerance;  // extra 'tolerance' on left & right.
-outside_height = slot_height + 2*tolerance; // extra 'tolerance' on bottom and top.
-outside_depth = slot_depth + 2*tolerance;  // extra 'tolerance' around inner slot depth.
+outside_width = slot_width + 2*tolerance;  // add tolerance on left & right.
+outside_height = slot_height + 2*tolerance;  // add tolerance on bottom and top.
+outside_depth = slot_depth + 2*tolerance;  // add minimum padding to inner slot.
 
-// Assign window_depth now that we have defined outside_depth.
-// Make it a little larger to guarantee a complete removal of frame.
+// Now that we have defined outside_depth, we can assign window_depth.
+// Make window_depth a little larger to guarantee a complete removal of frame.
 window_depth = outside_depth+0.1;
 
 
-// Creates a cube of dimensions width, height, depth with beveled edges of radius depth/2.
-// The width and height are increased by depth/2.
+// Creates a cube of dimensions width, height, depth with beveled edges of
+// radius depth/2. The width and height are increased by depth/3.
 // The entire shape is centered round 0,0,0 axis.
 module roundcube(width, height, depth) {
   delta=depth/3;
@@ -43,20 +43,23 @@ module roundcube(width, height, depth) {
   }
 }
 
-// creates a badge shape with beveled edges and top clip area.
-// The top clip will extend clip_height above height, with a hole through the middle. 
+// Creates a badge shape with beveled edges and top clip area.
+// The top clip will extend clip_height above height, with a hole through the
+// middle. 
 module badgeshape(width, height, depth, clip_height) {
   difference() {
     union() { 
-      // badge clip on top.
+      // Badge clip on top.
       // roundcube is centered, so make the clip shape twice as large, but only
-      // half will extend above frame. The overlap helps blend the two roundcubes together.
+      // half will extend above frame. The overlap helps blend the two
+			// roundcubes together.
       translate([0, height/2, 0]) roundcube(width/2, clip_height*2, depth);
+
       // badge frame.
       roundcube(width, height, depth);
     }
 
-    // cut a hold in the clip shape half as large as clip_height.
+    // Cut a hold in the clip, half as large as clip_height.
     translate([0, height/2+clip_height/4, 0]) {
         cube(size=[width/4, clip_height/2, depth], center=true);
     }
@@ -70,7 +73,7 @@ module badgeshape(width, height, depth, clip_height) {
 // 3) The window cube is also subtracted from the outside cube to
 //    create a portal to view the badge.
 
-// this is a guess that looks okay.
+// This is a guess that looks okay.
 clip_height = outside_height/15;
 
 difference() {
