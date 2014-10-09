@@ -113,6 +113,7 @@ module donuthole(width, height, depth, donut_radius) {
   echo("cube:", [depth, archeight(depth, donut_radius), depth]);
   difference() {
     children();
+
     scale([width/depth, height/depth, 1]) {
       intersection() {
         translate([0, (radius)/2, 0])
