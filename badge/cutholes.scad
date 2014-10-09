@@ -9,7 +9,7 @@
 //
 module roundhole(width, height, depth, s) {
   radius = depth/2;
-	S = (s <= 0 ? 0 : 1/s);
+  S = (s <= 0 ? 0 : 1/s);
   trans = radius + S*radius;
 
   difference() {
@@ -37,7 +37,7 @@ module roundhole(width, height, depth, s) {
 //
 module beveledhole(width, height, depth) {
   // the area that will be subtracted has a slightly larger w & h.
-	// but the opening will be limited to width & height.
+  // but the opening will be limited to width & height.
   w = width;
   // w = width + depth;  // use this width if adding bevel to left & right walls.
   h = height + depth;
