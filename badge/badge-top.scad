@@ -9,35 +9,49 @@ badge_depth = 2.5;  // mm. thickness of badge.
 // Stainless steel edges must be at least 1.5 mm thick.
 tolerance = 1.5; // mm.
 
-// Window is the empty area that makes the badge visible. To hold badge in
-// place the window should be *smaller* than the actual badge dimensions.
-// Cover left & right, and top & bottom by 'tolerance' mm.
+// The cover height is the size of each top and bottom "bands" of the badge.
+cover_height = 11; // mm.
+
+// Dimensions are built up around three shapes: outside, slot, and window.
+// Outside dimensions define the external size of the entire frame.  Slot
+// dimensions define the inner gap where the badge will slide into frame.
+// Window dimensions define the empty area in the frame where the badge is
+// visible.
+
+// Depths.
+slot_depth = badge_depth + 0.5;  // pretty tight on front & back of badge.
+outside_depth = slot_depth + 2*tolerance;  // the minimum steel wall size.
+window_depth = outside_depth + 0.1;  // same as outside + precision error.
+
+// Widths.
+slot_width = badge_width + 0.5;  // pretty tight on left & right.
+// To hold badge in place, the window should be *smaller* than the actual
+// badge. Frame will cover left & right badge edges by 'tolerance' mm.
 window_width = badge_width - 2*tolerance;
-window_height = badge_height - 5*tolerance;
-// window_depth is assigned below.
-
-// Slot is the inner gap where the badge will slide into frame.
-// The slot should be *slightly* larger than the badge.
-// Add 1mm on left & right, and top & bottom. (does not include badge clip).
-slot_width = badge_width + 2;
-slot_height = badge_height + 1 + 2*tolerance;
-slot_depth = badge_depth + 1;  // pretty tight. but should be enought.
-
-// Outside is the external dimension of the entire frame.
-// The additional padding (.75) is for volume lost by the beveled edges.
-// Add tolerance on left & right, top & bottom.
+// Add tolerance to left & right plus additional padding (.75) for volume lost
+// by the beveled edges.
 outside_width = slot_width + 2*tolerance + 0.75;
-outside_height = slot_height + 7*tolerance + 0.75;
-outside_depth = slot_depth + 2*tolerance;  // the bare minimum wall size.
 
-// Now that we have defined outside_depth, we can assign window_depth.
-// Make window_depth a little larger to guarantee a complete removal of frame
-// without aliasing due to floating point precision.
-window_depth = outside_depth + 0.1;
 
-// The badge also has a clip on top. This is the height of the clip.
-clip_height = outside_height/15;
-// clip_height = (outside_width - window_width) / 2 + 1;
+// Heights. Heights are assigned in two steps. The first step assigns minimum
+// heights based on the badge height and manufacturing tolerances. The second
+// step "stretches" the heights to make room to bore a hole through the top
+// cover. The heights are "stretched" enough to place the top of the badge
+// below the hole.
+
+// First step: minimum slot, window, & outside height.
+slot_height_pre = badge_height + 0.5;
+// Add extra padding (1) is for volume lost on the bottom beveled edge.
+outside_height_pre = slot_height_pre + 2*tolerance + 1;
+// The window height is what remains between the 'covers' on top & bottom.
+window_height_pre = outside_height_pre - 2*cover_height;
+
+// Second step: "stretch" heights calculated above to make room for hole.
+stretch_height = (
+    cover_height - tolerance - (outside_height_pre - slot_height_pre)/2);
+slot_height = slot_height_pre + stretch_height - tolerance;
+outside_height = outside_height_pre + stretch_height;
+window_height = window_height_pre + stretch_height;
 
 
 // Creates a "beveled cube" of dimensions width x height x depth with beveled
@@ -77,71 +91,47 @@ module cylindercube(width, height, depth) {
   }
 }
 
-// Creates a badge shape with beveled edges and top clip area.
-// The top clip will extend clip_height above height, with a hole through the
-// middle. 
-module badgeframe(width, height, depth, clip_height) {
-  difference() {
-    union() { 
-      // Badge clip on top.
-      // Create a smaller beveledcube of clip_height size. Clip height is
-      // doubled but only half will extend above frame. The overlap helps blend
-      // the two shapes together.
-      //translate([0, height/2+clip_height/4, 0])
-      //  donuthole(5, 5, 6, 7)
-        //roundhole(5, 5, depth, 1)
-        //union() {
-        //  translate([0, -(clip_height*2+clip_height/4)/2, 0])
-        //    cube(size=[width/4, clip_height/4, depth], center=true);
-       //  translate([0, -1, 0])
-         //  beveledcube(width, clip_height*2, depth);
-        //}
-      // Badge frame.
-      beveledcube(width, height, depth);
-    }
-
-    // Cut a hold in the clip, half as large as clip_height.
-    // translate([0, height/2+clip_height/5, 0]) {
-    //     cube(size=[width/4, clip_height/2, depth], center=true);
-    //  }
-  } 
-}
-
-// Logically, the badge holder consists of three intersecting shapes.
-// 1) The 'badgeframe' defines the volume of the entire frame.
-// 2) The window cylindercube is subtracted from the badgeframe shape
-//    to create a portal to view the badge.
+// The badge consists of three intersecting shapes.
+// 1) The 'beveledcube' defines the volume of the entire frame.
+// 2) The 'cylindercube' creates the window by subtracting it from the
+//    badge frame to create a portal to view the badge.
 // 3) The slot cube is subtracted from within the badgeframe to
 //    create a space for the badge to fit.
 
-module badge(ow, oh, od, ww, wh, wd, sw, sh, sd) {
+module badge(outside_width, outside_height, outside_depth) {
   difference() {
-    // outside shape.
-    badgeframe(outside_width+ow, outside_height+oh, outside_depth+od, clip_height);
+    // outside frame.
+    beveledcube(outside_width, outside_height, outside_depth);
 
     // cut out the viewing window from the center.
-    cylindercube(window_width+ww, window_height+wh, window_depth+wd);
+    translate([0,0,0])
+      cylindercube(window_width, window_height, window_depth);
 
     // cut out the slot within the frame.
-    cube(size = [slot_width+sw,slot_height+sh,slot_depth+sd], center = true);
+    cube(size = [slot_width,slot_height,slot_depth], center = true);
 
     // finish cutting the slot through the rest of the badge clip.
     translate([0,20,0])
-      cube(size = [slot_width+sw,slot_height+sh,slot_depth+sd], center = true);
+      cube(size = [slot_width,slot_height,slot_depth], center = true);
   }
 }
 
-// normal.
-difference() {
-  donuthole(5, 5, 7, 7)
-    translate([0, -outside_height/2+4*tolerance+1, 0])
-      badge(0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-//  translate([20, -outside_height/2+4*tolerance+0.5, 0])   
-//    cube(size=[outside_width/2, outside_height, outside_depth], center=true);
-}
-//translate([-25, -badge_height/2-2*tolerance, 0])
+// Create the badge, center top badge cover above the origin, and
+// cut a donut hole through it.
+donuthole(5, 5, 7, 7)
+  translate([0, -outside_height/2+cover_height/2+1, 0])
+    badge(outside_width, outside_height, outside_depth);
+
+// "Rulers" used during testing.
+//translate([20, -outside_height/2+cover_height/2, 0])
+//  cube(size=[outside_width/2, outside_height, outside_depth], center=true);
+//translate([-25, -badge_height/2 - 2.5, 0])
 //  color("lightblue")
 //    cube(size=[badge_width,badge_height,badge_depth], center=true);
-
-
+//translate([5, -outside_height+13.5, 0])
+//  color("pink")
+//    cube(size=[tolerance,8,badge_depth], center=true);
+//translate([5, 0.875, 0])
+//  color("pink")
+//    cube(size=[tolerance,10.5,badge_depth], center=true);
