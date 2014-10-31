@@ -1,6 +1,6 @@
 // Badge dimensions.
-badge_width = 55;  // mm.
-badge_height = 86;  // mm.
+badge_width = 54;  // mm.
+badge_height = 85.6;  // mm.
 badge_depth = 2.5;  // mm. thickness of badge.
 
 // Shapeways model tolerance.
