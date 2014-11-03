@@ -17,7 +17,7 @@ window_height = badge_height - 2*tolerance;
 // Slot is the inner gap where the badge will slide into frame.
 // The slot should be *slightly* larger than the badge.
 // Add 1mm on left & right, and top & bottom. (does not include badge clip).
-slot_width = badge_width + 2;
+slot_width = badge_width + 0.5;
 slot_height = badge_height + 2;
 slot_depth = badge_depth + 0.5;  // pretty tight. but should be enought.
 
@@ -105,7 +105,6 @@ module badgeframe(width, height, depth, clip_height) {
 // 3) The slot cube is subtracted from within the badgeframe to
 //    create a space for the badge to fit.
 
-scale=1.25;
 difference() {
   // outside shape.
   badgeframe(outside_width, outside_height, outside_depth, clip_height);
@@ -120,3 +119,24 @@ difference() {
   translate([0,20,0])
       cube(size = [slot_width,slot_height,slot_depth], center = true);
 }
+
+// Rulers for "measuring" the model after rendering.
+// window
+//translate([outside_width/2+5, 0, 0])
+//  cube(size=[1, window_height, 1], center=true);
+// slot
+//translate([outside_width/2+7, 0, 0])
+//  cube(size=[1, slot_height, 1], center=true);
+// frame.
+//translate([outside_width/2+9, 0, 0])
+//  cube(size=[1, outside_height, 1], center=true);
+
+// window
+//translate([0, outside_height/2+5, 0])
+//  cube(size=[window_width, 1, 1], center=true);
+// slot
+//translate([0, outside_height/2+7, 0])
+//  cube(size=[slot_width, 1, 1], center=true);
+// frame.
+//translate([0, outside_height/2+9, 0])
+//  cube(size=[outside_width, 1, 1], center=true);
