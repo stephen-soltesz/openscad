@@ -130,6 +130,24 @@ module donuthole(width, height, depth, donut_radius) {
   }
 }
 
+// circlehole cuts a plain, circular hole through x-y plane in a child shape.
+// The hole will be scaled to have width, height, and depth dimensions.
+//
+// Example usage:
+//   circlehole(5, 5, 5) cube(size=[20, 20, 20], center=true);
+//
+module circlehole(width, height, depth) {
+  radius = depth/2;
+
+  difference() {
+    children();
+
+    // Create a cylinder to subtract from children above.
+    scale([width/depth, height/depth, 1])
+      cylinder(h=depth, r=radius, center=true);
+  }
+}
+
 
 // all circles are renedered using fn number of segments.
 // higher value for more detail, but slower rendering.
@@ -139,8 +157,11 @@ $fn = 30;
 
 samplesize = [20,20,6];
 
+translate([-40,0,0])
+  circlehole(5, 5, 6) cube(size=samplesize, center=true);
+
 translate([-20,0,0])
-  roundhole(5, 5, 6, 0.01) cube(size=samplesize, center=true);
+  roundhole(5, 5, 6, 1) cube(size=samplesize, center=true);
 
 translate([0,0,0])
   beveledhole(5, 5, 6) cube(size=samplesize, center=true);
