@@ -80,7 +80,7 @@ module squaredonuthole(width, height, depth, donut_radius) {
     intersection() {
       scale([width/radius, height/radius, 1]) {
         translate([0, donut_radius, 0]) rotate([0, 90, 0]) {
-          rotate_extrude(convexity = 10) {
+          rotate_extrude(convexity = 10, $fn=100) {
             // rotate_extrude must start as an offset from x axis.
             translate([donut_radius, 0, 0]) square(radius, center=true);
           }
@@ -91,6 +91,38 @@ module squaredonuthole(width, height, depth, donut_radius) {
     }
   }
 }
+module squaredonuthole2(width, height, depth, donut_radius) {
+  radius = depth/2; 
+  h_curve = H_curve(donut_radius, depth, height);
+  h_diff = R_outer(donut_radius, depth, height) - (donut_radius + (height / 2));
+  h_new = height + 2*h_diff;
+  echo("H_curve", h_curve);
+
+  difference() {
+    children();
+
+    intersection() {
+      //scale([width/radius, height/radius, 1]) {
+        translate([0, donut_radius, 0])  rotate([0, 90, 0]) {
+          rotate_extrude(convexity = 10, $fn=100) {
+            // rotate_extrude must start as an offset from x axis.
+            translate([donut_radius + (h_diff / 2), 0, 0])
+              square(size=[h_curve, width], center=true);
+          }
+       // }
+      }
+     translate([0, h_diff/2, 0])
+        cube(size=[width, h_new, depth], center=true);
+    }
+  }
+}
+
+// r - radius
+// d - depth
+// h - original height.
+function H_curve(r, d, h) = R_outer(r, d, h) - R_inner(r, d, h);
+function R_inner(r, d, h) = sqrt(pow(d/2, 2) + pow(r - (h/2), 2));
+function R_outer(r, d, h) = sqrt(pow(d/2, 2) + pow(r + (h/2), 2));
 
 
 // helper functions for calculating the height of a donut arch segment.
