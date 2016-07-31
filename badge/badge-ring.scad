@@ -1,8 +1,8 @@
 use <cutholes.scad>;
 
 // Badge dimensions.
-badge_width = 54;  // mm.
-badge_height = 85.6;  // mm.
+badge_width = 55;  // mm.
+badge_height = 86;  // mm.
 badge_depth = 2.5;  // mm. thickness of badge.
 
 // Shapeways model tolerance.
@@ -12,14 +12,14 @@ tolerance = 1.5; // mm.
 // Window is the empty area that makes the badge visible. To hold badge in
 // place the window should be *smaller* than the actual badge dimensions.
 // Cover left & right, and top & bottom by 'tolerance' mm.
-window_width = badge_width - 3*tolerance;
+window_width = badge_width - 2*tolerance;
 window_height = badge_height - 2*tolerance;
 // window_depth is assigned below.
 
 // Slot is the inner gap where the badge will slide into frame.
 // The slot should be *slightly* larger than the badge.
 // Add 1mm on left & right, and top & bottom. (does not include badge clip).
-slot_width = badge_width + 0.5;
+slot_width = badge_width + 2;
 slot_height = badge_height + 2;
 slot_depth = badge_depth + 0.5;  // pretty tight. but should be enought.
 
@@ -36,7 +36,7 @@ outside_depth = slot_depth + 2*tolerance;  // the bare minimum wall size.
 window_depth = outside_depth + 0.1;
 
 // The badge also has a clip on top. This is the height of the clip.
-clip_height = 7; // outside_height/15;
+clip_height = outside_height/15;
 // clip_height = (outside_width - window_width) / 2 + 1;
 
 
@@ -81,14 +81,21 @@ module cylindercube(width, height, depth) {
 // The top clip will extend clip_height above height, with a hole through the
 // middle. 
 module badgeframe(width, height, depth, clip_height) {
-  //difference() {
+  difference() {
     union() { 
       // Badge clip on top.
       // Create a smaller beveledcube of clip_height size. Clip height is
       // doubled but only half will extend above frame. The overlap helps blend
       // the two shapes together.
-      translate([0, height/2, 0]) beveledcube(width/4, clip_height*2, depth);
-
+      translate([0, height/2+clip_height/4+.5, 0])
+        donuthole(5, 5, 6, 7)
+        //roundhole(5, 5, depth, 1)
+        //union() {
+        //  translate([0, -(clip_height*2+clip_height/4)/2, 0])
+        //    cube(size=[width/4, clip_height/4, depth], center=true);
+         translate([0, -1, 0])
+           beveledcube(width/4, clip_height*2.4, depth);
+        //}
       // Badge frame.
       beveledcube(width, height, depth);
     }
@@ -96,8 +103,8 @@ module badgeframe(width, height, depth, clip_height) {
     // Cut a hold in the clip, half as large as clip_height.
     // translate([0, height/2+clip_height/5, 0]) {
     //     cube(size=[width/4, clip_height/2, depth], center=true);
-    //}
-  //} 
+    //  }
+  } 
 }
 
 // Logically, the badge holder consists of three intersecting shapes.
@@ -107,65 +114,24 @@ module badgeframe(width, height, depth, clip_height) {
 // 3) The slot cube is subtracted from within the badgeframe to
 //    create a space for the badge to fit.
 
-module badge() {
+module badge(ow, oh, od, ww, wh, wd, sw, sh, sd) {
+  difference() {
+    // outside shape.
+    badgeframe(outside_width+ow, outside_height+oh, outside_depth+od, clip_height);
 
-difference() {
-  // outside shape.
-  badgeframe(outside_width, outside_height, outside_depth, clip_height);
+    // cut out the viewing window from the center.
+    cylindercube(window_width+ww, window_height+wh, window_depth+wd);
 
-  // cut out the viewing window from the center.
-  cylindercube(window_width, window_height, window_depth);
+    // cut out the slot within the frame.
+    cube(size = [slot_width+sw,slot_height+sh,slot_depth+sd], center = true);
 
-  // cut out the slot within the frame.
-  cube(size = [slot_width,slot_height,slot_depth], center = true);
-
-  // finish cutting the slot through the rest of the badge clip.
-  translate([0,20,0])
-      cube(size = [slot_width,slot_height,slot_depth], center = true);
+    // finish cutting the slot through the rest of the badge clip.
+    translate([0,20,0])
+      cube(size = [slot_width+sw,slot_height+sh,slot_depth+sd], center = true);
+  }
 }
-}
 
-difference() {
-donuthole(5, 5, 7, 7)
-translate([0, -outside_height/2, 0])
-  badge();
+// normal.
+translate([0, 0, 0])
+   badge(0, 0, 0, 0, 0, 0, 0, 0, 0);
 
-translate([-outside_width/8-(outside_width/2-outside_width/8)/2, 0, 0])
-  cube(size=[outside_width/2-outside_width/8, 1, outside_depth], center=true);
-
-translate([outside_width/8+(outside_width/2-outside_width/8)/2, 0, 0])
-  cube(size=[outside_width/2-outside_width/8, 1, outside_depth], center=true);
-
-translate([0, clip_height, 0])
-  cube(size=[outside_width/4, 1, outside_depth], center=true);
-
-translate([outside_width/8, 3, 0])
-  cube(size=[1, clip_height, outside_depth], center=true);
-
-translate([-outside_width/8, 3, 0])
-  cube(size=[1, clip_height, outside_depth], center=true);
-
-//translate([0, -outside_height, -outside_depth/2])
-//cube(size=[outside_width, outside_height, outside_depth]);
-
-}
-// Rulers for "measuring" the model after rendering.
-// window
-//translate([outside_width/2+5, 0, 0])
-//  cube(size=[1, window_height, 1], center=true);
-// slot
-//translate([outside_width/2+7, 0, 0])
-//  cube(size=[1, slot_height, 1], center=true);
-// frame.
-//translate([outside_width/2+9, 0, 0])
-//  cube(size=[1, outside_height, 1], center=true);
-
-// window
-//translate([0, outside_height/2+5, 0])
-//  cube(size=[window_width, 1, 1], center=true);
-// slot
-//translate([0, outside_height/2+7, 0])
-//  cube(size=[slot_width, 1, 1], center=true);
-// frame.
-//translate([0, outside_height/2+9, 0])
-//  cube(size=[outside_width, 1, 1], center=true);
